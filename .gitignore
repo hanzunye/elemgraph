@@ -1,0 +1,33 @@
+# Local notes, never committed
+*.local.md
+
+# CMake build trees
+/build/
+/build-*/
+CMakeUserPresets.json
+/compile_commands.json
+
+# Nix (`result` is a symlink, so no trailing slash)
+/result
+/result-*
+.direnv/
+
+# Downloaded benchmark datasets (DIMACS, SNAP): fetched by script, too large for git
+/bench/data/
+
+# Profiling output
+perf.data
+perf.data.old
+*.trace
+
+# Python
+__pycache__/
+*.pyc
+
+# Editors and tools
+.cache/
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
