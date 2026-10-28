@@ -44,7 +44,7 @@ TEST(Rng, BelowStaysInRangeAndHitsEveryValue) {
 
 TEST(RandomSimpleGraph, HasNoSelfLoopsOrParallelEdges) {
     rng r(7);
-    const test_graph g = random_simple_graph(r, 30, 200);
+    const input_graph g = random_simple_graph(r, 30, 200);
     EXPECT_EQ(g.n, 30u);
     ASSERT_EQ(g.edges.size(), 200u);
     std::set<std::pair<vertex, vertex>> seen;
@@ -63,7 +63,7 @@ TEST(RandomSimpleGraph, CanBeComplete) {
 
 TEST(RandomMultigraph, HasSelfLoopsAndParallelEdgesInBothDirections) {
     rng r(7);
-    const test_graph g = random_multigraph(r, 30, 300);
+    const input_graph g = random_multigraph(r, 30, 300);
     ASSERT_EQ(g.edges.size(), 300u);
     int self_loops = 0;
     int same_direction = 0;
@@ -87,13 +87,13 @@ TEST(RandomMultigraph, HasSelfLoopsAndParallelEdgesInBothDirections) {
 
 TEST(RandomMultigraph, OneVertexGivesOnlySelfLoops) {
     rng r(7);
-    const test_graph g = random_multigraph(r, 1, 5);
+    const input_graph g = random_multigraph(r, 1, 5);
     EXPECT_EQ(g.edges, std::vector<edge>(5, edge{0, 0}));
 }
 
 TEST(RandomTree, IsConnectedWithNMinusOneEdges) {
     const auto make = [](rng& r) { return random_tree(r, static_cast<vertex>(1 + r.below(50))); };
-    for_each_random_graph(0, 200, make, [](const test_graph& g) {
+    for_each_random_graph(0, 200, make, [](const input_graph& g) {
         EXPECT_EQ(g.edges.size(), g.n - 1);
         EXPECT_EQ(connected_components(g), std::vector<std::uint32_t>(g.n, 0));
     });
