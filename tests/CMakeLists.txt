@@ -5,6 +5,7 @@ include(GoogleTest)
 # support/ holds shared test code, each part with its own tests;
 # generators/ tests the benchmark inputs in bench/generators/.
 add_executable(elemgraph_tests
+    generators/dimacs_test.cpp
     generators/input_graph_test.cpp
     generators/synthetic_test.cpp
     support/random_graphs_test.cpp
