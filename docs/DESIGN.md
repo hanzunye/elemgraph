@@ -172,6 +172,9 @@ when an algorithm is called many times on the same graph.
   `(min(u,v), max(u,v))`; duplicates and self-loops are removed. This matters for bridges: the DIMACS road
   networks list every road as two opposite arcs, and R-MAT generates many duplicate edges, so a naive reader
   would turn every bridge into a pair of parallel edges. Multigraphs are used only in tests.
+- **Determinism:** generators draw bounded integers and shuffles from `std::mt19937_64` with their own
+  code, because `std::uniform_int_distribution` and `std::shuffle` give different results in libstdc++
+  and libc++. So a seed gives the same graph on the M2 and on the x86 laptop, and in tests.
 - **Sizes:** chosen to cross cache boundaries (fits in L2 → fits in LLC → DRAM-bound), roughly 10^4 to 10^7 vertices.
 - **Machines:**
   - Apple M2 (macOS; 4 performance + 4 efficiency cores; 16 GB). macOS offers neither core pinning nor a
@@ -224,7 +227,7 @@ elemgraph/
 │       └── certificates.hpp        # certificate checkers
 ├── tests/
 ├── bench/
-│   ├── generators/                 # grid, G(n,m), R-MAT, DIMACS reader
+│   ├── generators/                 # grid, G(n,m), R-MAT, DIMACS reader (also used by tests)
 │   ├── *.cpp                       # Google Benchmark suites
 │   ├── fetch-data.sh               # downloads DIMACS / SNAP inputs into data/
 │   ├── data/                       # downloaded inputs, not in git

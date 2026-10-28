@@ -27,7 +27,7 @@ namespace detail {
 // A self-loop appears twice at its vertex, which does not matter here.
 using incidences = std::vector<std::vector<std::pair<vertex, edge_id>>>;
 
-inline incidences make_incidences(const test_graph& g) {
+inline incidences make_incidences(const input_graph& g) {
     incidences inc(g.n);
     for (edge_id e = 0; e < g.edges.size(); ++e) {
         const auto [u, v] = g.edges[e];
@@ -62,7 +62,7 @@ inline std::vector<bool> reachable(const incidences& inc, vertex source,
 
 // Component label of every vertex. Components are numbered 0, 1, ... in the
 // order of their smallest vertex.
-inline std::vector<std::uint32_t> connected_components(const test_graph& g) {
+inline std::vector<std::uint32_t> connected_components(const input_graph& g) {
     const auto inc = detail::make_incidences(g);
     std::vector<std::uint32_t> label(g.n, none);
     std::uint32_t count = 0;
@@ -98,7 +98,7 @@ inline std::vector<std::uint32_t> canonical_labels(std::span<const std::uint32_t
 // Number of edges on a shortest path from `source` to every vertex, `none` for
 // unreachable vertices. Computed by relaxing every edge until nothing changes
 // (Bellman–Ford with unit weights) rather than by BFS.
-inline std::vector<std::uint32_t> distances(const test_graph& g, vertex source) {
+inline std::vector<std::uint32_t> distances(const input_graph& g, vertex source) {
     assert(source < g.n);
     std::vector<std::uint32_t> dist(g.n, none);
     dist[source] = 0;
@@ -121,7 +121,7 @@ inline std::vector<std::uint32_t> distances(const test_graph& g, vertex source) 
 // Ids of all bridges, ascending. Edge {u, v} is a bridge iff v cannot be
 // reached from u once the edge is removed. So self-loops and parallel edges
 // are never bridges.
-inline std::vector<edge_id> bridges(const test_graph& g) {
+inline std::vector<edge_id> bridges(const input_graph& g) {
     const auto inc = detail::make_incidences(g);
     std::vector<edge_id> result;
     for (edge_id e = 0; e < g.edges.size(); ++e) {
@@ -137,7 +137,7 @@ inline std::vector<edge_id> bridges(const test_graph& g) {
 // iff removing it disconnects its component, that is, iff some neighbour of v
 // can no longer reach another neighbour of v once v is removed. Self-loops
 // and parallel edges do not count as extra neighbours.
-inline std::vector<vertex> cut_vertices(const test_graph& g) {
+inline std::vector<vertex> cut_vertices(const input_graph& g) {
     const auto inc = detail::make_incidences(g);
     std::vector<vertex> result;
     for (vertex v = 0; v < g.n; ++v) {

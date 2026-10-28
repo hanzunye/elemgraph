@@ -16,12 +16,12 @@ namespace elemgraph::test {
 // that one bug does not produce thousands of messages. To debug a failure,
 // rebuild its graph in a separate test:
 //     rng r(seed);
-//     test_graph g = small_random_multigraph(r);
+//     input_graph g = small_random_multigraph(r);
 template <typename Make, typename Check>
 void for_each_random_graph(std::uint64_t first_seed, std::uint64_t count, Make make, Check check) {
     for (std::uint64_t seed = first_seed; seed < first_seed + count; ++seed) {
         rng r(seed);
-        const test_graph g = make(r);
+        const input_graph g = make(r);
         SCOPED_TRACE(::testing::Message() << "seed " << seed << ": " << g);
         check(g);
         if (::testing::Test::HasFailure()) {
