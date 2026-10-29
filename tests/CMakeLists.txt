@@ -2,9 +2,11 @@ find_package(GTest REQUIRED)
 include(GoogleTest)
 
 # One test binary for the whole library. Add new test files to this list.
+# Files at the top level test the library in include/elemgraph/;
 # support/ holds shared test code, each part with its own tests;
 # generators/ tests the benchmark inputs in bench/generators/.
 add_executable(elemgraph_tests
+    edge_list_test.cpp
     generators/dimacs_test.cpp
     generators/input_graph_test.cpp
     generators/synthetic_test.cpp
