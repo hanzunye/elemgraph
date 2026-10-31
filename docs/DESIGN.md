@@ -85,8 +85,9 @@ Template parameters:
 The parameters are introduced in stages (§9): v0.1 has `V` and `E`, always stores edge ids and uses
 `std::allocator`; `EdgeIds` and `Alloc` follow in v0.2.
 
-Construction goes through an `edge_list<V>` and a builder that fills the CSR arrays with a counting
-sort in `O(n + m)`. Self-loops are dropped by default; parallel edges are kept (they matter for bridges).
+Construction goes through an `edge_list<V>`: the `csr_graph` constructor fills the CSR arrays with a
+counting sort in `O(n + m)`. Parallel edges are kept (they matter for bridges) and self-loops are dropped.
+An edge keeps its position in the edge list as its id, so results such as bridges refer to the input edges.
 
 ### 4.3 Memory alignment
 
@@ -218,7 +219,7 @@ elemgraph/
 ├── include/elemgraph/
 │   ├── concepts.hpp
 │   ├── aligned_allocator.hpp
-│   ├── edge_list.hpp, builder.hpp
+│   ├── edge_list.hpp
 │   ├── csr_graph.hpp, adjacency_list.hpp
 │   └── algorithms/
 │       ├── bfs.hpp, dfs.hpp
@@ -245,7 +246,7 @@ elemgraph/
 
 | Version | Content |
 |---------|---------|
-| v0.1 | CSR + adjacency list, builder, BFS / DFS / connected components, bridges / cut vertices / 2-connectivity with both approaches, tests, Nix flake, CI, first benchmarks (Q1, Q2, Q4) |
+| v0.1 | CSR + adjacency list, BFS / DFS / connected components, bridges / cut vertices / 2-connectivity with both approaches, tests, Nix flake, CI, first benchmarks (Q1, Q2, Q4) |
 | v0.2 | Certificates and checkers (Q6), the `EdgeIds` and `Alloc` template parameters, alignment and bitset experiments (Q3), 2-edge-connected and biconnected components, perf counters on bare-metal Linux, a SNAP graph |
 | v0.3 | Certifying 3-edge-connectivity [Mehlhorn, Neumann, Schmidt 2017], built on the chain decomposition |
 | v0.4 | Vertex reordering (Q5), weighted CSR and Dijkstra heap variants, instruction-count regression benchmarks in CI (Cachegrind) |
