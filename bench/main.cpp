@@ -45,19 +45,21 @@ std::string cpu_model() {
     return "unknown";
 }
 
+#if defined(__APPLE__)
 // Google Benchmark reports the caches of one kind of core only; on Apple
 // silicon these are the efficiency cores. Records both kinds: perflevel0 are
-// the performance cores, perflevel1 the efficiency cores.
+// the performance cores, perflevel1 the efficiency cores. Defined on macOS
+// only: elsewhere it would be unused, which -Werror turns into an error.
 std::string apple_core_caches() {
-#if defined(__APPLE__)
     const auto number = [](const char* key) -> std::string {
+        // Some keys are 4 bytes, others 8. value starts at 0, so on a
+        // little-endian CPU a 4-byte answer still reads correctly.
         std::uint64_t value = 0;
         std::size_t size = sizeof(value);
         if (sysctlbyname(key, &value, &size, nullptr, 0) != 0) {
             return "?";
         }
-        return std::to_string(size == sizeof(std::uint32_t) ? static_cast<std::uint32_t>(value)
-                                                            : value);
+        return std::to_string(value);
     };
     std::string text;
     for (const char* level : {"perflevel0", "perflevel1"}) {
@@ -68,10 +70,8 @@ std::string apple_core_caches() {
                 number((prefix + "l2cachesize").c_str()) + " B";
     }
     return text + "; cache line " + number("hw.cachelinesize") + " B";
-#else
-    return "";
-#endif
 }
+#endif
 
 std::string compiler() {
 #if defined(__clang__)
