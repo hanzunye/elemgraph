@@ -23,6 +23,8 @@ namespace elemgraph {
 
 class csr_graph {
 public:
+    using vertex_type = vertex;
+
     // Index into targets_ and edge_ids_. Fixed to 32 bits for now, like vertex
     // and edge_id; it becomes the template parameter E later (DESIGN.md §4.2).
     using offset = std::uint32_t;

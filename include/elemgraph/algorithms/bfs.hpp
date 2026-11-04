@@ -9,8 +9,8 @@
 //                    it grows: the baseline for the flat version.
 // Both visit the vertices in the same order and give the same result.
 //
-// They work on any graph with num_vertices() and neighbors(v), such as
-// csr_graph and adjacency_list. (concepts.hpp will state this requirement.)
+// They work on any StaticGraph (concepts.hpp), such as csr_graph and
+// adjacency_list.
 #pragma once
 
 #include <cassert>
@@ -19,6 +19,7 @@
 #include <queue>
 #include <vector>
 
+#include "../concepts.hpp"
 #include "../edge_list.hpp"
 
 namespace elemgraph {
@@ -44,7 +45,7 @@ struct bfs_workspace {
 };
 
 // Searches g from `source` and overwrites `result`. The queue is a flat array.
-template <typename Graph>
+template <StaticGraph Graph>
 void bfs(const Graph& g, vertex source, bfs_result& result, bfs_workspace& workspace) {
     const vertex n = g.num_vertices();
     assert(source < n);
@@ -74,7 +75,7 @@ void bfs(const Graph& g, vertex source, bfs_result& result, bfs_workspace& works
 }
 
 // The same search with std::queue as the queue.
-template <typename Graph>
+template <StaticGraph Graph>
 void bfs_std_queue(const Graph& g, vertex source, bfs_result& result) {
     const vertex n = g.num_vertices();
     assert(source < n);
@@ -99,7 +100,7 @@ void bfs_std_queue(const Graph& g, vertex source, bfs_result& result) {
 }
 
 // Convenience versions that allocate their own result.
-template <typename Graph>
+template <StaticGraph Graph>
 [[nodiscard]] bfs_result bfs(const Graph& g, vertex source) {
     bfs_result result;
     bfs_workspace workspace;
@@ -107,7 +108,7 @@ template <typename Graph>
     return result;
 }
 
-template <typename Graph>
+template <StaticGraph Graph>
 [[nodiscard]] bfs_result bfs_std_queue(const Graph& g, vertex source) {
     bfs_result result;
     bfs_std_queue(g, source, result);
