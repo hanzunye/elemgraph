@@ -22,6 +22,9 @@ namespace elemgraph {
 using vertex = std::uint32_t;
 using edge_id = std::uint32_t;
 
+// Stands for "no vertex", e.g. the parent of the root of a search tree.
+inline constexpr vertex no_vertex = std::numeric_limits<vertex>::max();
+
 struct edge {
     vertex u;
     vertex v;
