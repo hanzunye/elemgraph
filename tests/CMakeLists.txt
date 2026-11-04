@@ -6,6 +6,8 @@ include(GoogleTest)
 # support/ holds shared test code, each part with its own tests;
 # generators/ tests the benchmark inputs in bench/generators/.
 add_executable(elemgraph_tests
+    adjacency_list_random_test.cpp
+    adjacency_list_test.cpp
     csr_graph_random_test.cpp
     csr_graph_test.cpp
     edge_list_test.cpp
