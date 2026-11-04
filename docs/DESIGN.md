@@ -53,16 +53,20 @@ concept StaticGraph = requires(const G& g, typename G::vertex_type v) {
     requires std::unsigned_integral<typename G::vertex_type>;
     { g.num_vertices() } -> std::convertible_to<std::size_t>;
     { g.num_edges() }    -> std::convertible_to<std::size_t>;
-    { g.neighbors(v) }   -> std::ranges::forward_range;
+    { g.degree(v) }      -> std::convertible_to<std::size_t>;
+    { g.neighbors(v) }   -> std::ranges::random_access_range;   // so a DFS can resume at an index
 };
 
 // Refinement: every half-edge also knows the id of its undirected edge.
 // Needed to handle parallel edges correctly in bridge / 2-connectivity algorithms.
 template <class G>
 concept EdgeIndexedGraph = StaticGraph<G> && requires(const G& g, typename G::vertex_type v) {
-    { g.incident_edges(v) } -> std::ranges::forward_range;   // (target, edge_id) pairs
+    { g.edge_ids(v) } -> std::ranges::random_access_range;      // edge_ids(v)[i] belongs to neighbors(v)[i]
 };
 ```
+
+The edge ids are a second range parallel to `neighbors(v)` rather than (target, edge id) pairs,
+so that algorithms which do not need them (BFS) never load them.
 
 Algorithms state the weakest concept they need. A trait `has_contiguous_neighbors<G>`
 (true if `neighbors(v)` is a `std::ranges::contiguous_range`) lets an algorithm pick a tighter,

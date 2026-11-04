@@ -19,6 +19,8 @@ namespace elemgraph {
 
 class adjacency_list {
 public:
+    using vertex_type = vertex;
+
     explicit adjacency_list(const edge_list& list) : adj_(list.num_vertices()) {
         // Each list gets its degree as capacity before it is filled, so that
         // Q1 compares the two layouts and not the spare capacity that
