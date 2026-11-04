@@ -44,7 +44,6 @@ if(ELEMGRAPH_SANITIZE)
     target_link_options(elemgraph_build_flags INTERFACE -fsanitize=${sanitizers})
 endif()
 
-add_subdirectory(bench)
-
 enable_testing()
+add_subdirectory(bench)
 add_subdirectory(tests)

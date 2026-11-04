@@ -8,7 +8,8 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
-      # Configures, builds and runs the test suite with the compiler of `stdenv`.
+      # Configures and builds the tests and benchmarks with the compiler of
+      # `stdenv`, then runs the tests and a smoke run of the benchmarks.
       mkTests = pkgs: { name, stdenv, sanitize ? false }:
         stdenv.mkDerivation {
           pname = "elemgraph-tests-${name}";
@@ -16,7 +17,7 @@
           src = ./.;
 
           nativeBuildInputs = [ pkgs.cmake pkgs.ninja ];
-          buildInputs = [ pkgs.gtest ];
+          buildInputs = [ pkgs.gtest pkgs.gbenchmark ];
 
           cmakeBuildType = if sanitize then "Debug" else "Release";
           cmakeFlags = [ (pkgs.lib.cmakeBool "ELEMGRAPH_SANITIZE" sanitize) ];
@@ -44,14 +45,14 @@
           clang = tests { name = "clang"; stdenv = pkgs.clangStdenv; };
           sanitize = tests { name = "sanitize"; stdenv = pkgs.gccStdenv; sanitize = true; };
         } else {
-          # On macOS, nixpkgs builds GoogleTest with clang and libc++,
-          # which a GCC/libstdc++ build cannot link against.
+          # On macOS, nixpkgs builds GoogleTest and Google Benchmark with clang
+          # and libc++, which a GCC/libstdc++ build cannot link against.
           clang = tests { name = "clang"; stdenv = pkgs.stdenv; };
         });
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          packages = [ pkgs.cmake pkgs.ninja pkgs.gtest pkgs.clang-tools ];
+          packages = [ pkgs.cmake pkgs.ninja pkgs.gtest pkgs.gbenchmark pkgs.clang-tools ];
           hardeningDisable = [ "all" ];
         };
       });
