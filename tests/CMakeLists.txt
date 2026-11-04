@@ -12,6 +12,8 @@ add_executable(elemgraph_tests
     algorithms/bfs_test.cpp
     algorithms/components_random_test.cpp
     algorithms/components_test.cpp
+    algorithms/connectivity_random_test.cpp
+    algorithms/connectivity_test.cpp
     algorithms/dfs_random_test.cpp
     algorithms/dfs_test.cpp
     algorithms/union_find_test.cpp
