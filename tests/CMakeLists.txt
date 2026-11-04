@@ -10,6 +10,8 @@ add_executable(elemgraph_tests
     adjacency_list_test.cpp
     algorithms/bfs_random_test.cpp
     algorithms/bfs_test.cpp
+    algorithms/chains_random_test.cpp
+    algorithms/chains_test.cpp
     algorithms/components_random_test.cpp
     algorithms/components_test.cpp
     algorithms/connectivity_random_test.cpp
