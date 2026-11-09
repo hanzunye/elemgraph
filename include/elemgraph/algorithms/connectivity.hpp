@@ -5,7 +5,9 @@
 //       Tarjan 1974]: low[v] is the smallest DFS number reachable from the
 //       subtree of v by tree edges down and then one non-tree edge.
 //   chain_connectivity()     the chain decomposition [Schmidt 2013]; it can
-//       also return the chains themselves.
+//       also return the chains themselves. docs/chain-decomposition.md proves
+//       its rules for graphs with parallel edges, several components and
+//       vertices of degree 1, which the paper does not cover.
 //
 // Both start from the same dfs() result, so a benchmark can time the search
 // and the rest separately (Q4).
