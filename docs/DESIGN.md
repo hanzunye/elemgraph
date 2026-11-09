@@ -127,8 +127,8 @@ For a simple connected graph the paper shows:
 The paper assumes simple, connected graphs. elemgraph applies the decomposition per connected
 component, allows vertices of degree 1 (an endpoint of a bridge is a cut vertex iff its degree is ≥ 2),
 and keeps parallel edges, distinguished by edge id, so that a parallel copy of a tree edge becomes a back edge.
-These extensions are not covered by the paper's proofs. They are argued in a short note
-(`docs/chain-decomposition.md`) and checked by differential tests against the brute-force reference.
+These extensions are not covered by the paper's proofs. They are proved in a short note,
+[chain-decomposition.md](chain-decomposition.md), and checked by differential tests against the brute-force reference.
 Both the chain decomposition and the lowpoint algorithm run on the same iterative DFS core.
 
 **Certificates.** If G is 2-edge-connected, the chains form an ear decomposition of G [Robbins 1939];
