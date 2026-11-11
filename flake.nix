@@ -8,6 +8,23 @@
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
+      # On Linux, Google Benchmark is built with libpfm, so that a run can
+      # report hardware counters for each benchmark (--benchmark_perf_counters,
+      # see bench/run.sh). The checks use the same build, so CI shows that it
+      # still builds and links.
+      gbenchmarkFor = pkgs:
+        if pkgs.stdenv.hostPlatform.isLinux then
+          pkgs.gbenchmark.overrideAttrs (old: {
+            propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ pkgs.libpfm ];
+            cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DBENCHMARK_ENABLE_LIBPFM:BOOL=TRUE" ];
+            # With libpfm, Google Benchmark's own tests expect to open hardware
+            # counters, which neither the Nix build sandbox nor the CI virtual
+            # machines allow. The same tests run in the build without libpfm.
+            doCheck = false;
+          })
+        else
+          pkgs.gbenchmark;
+
       # Configures and builds the tests and benchmarks with the compiler of
       # `stdenv`, then runs the tests and a smoke run of the benchmarks.
       mkTests = pkgs: { name, stdenv, sanitize ? false }:
@@ -17,7 +34,7 @@
           src = ./.;
 
           nativeBuildInputs = [ pkgs.cmake pkgs.ninja ];
-          buildInputs = [ pkgs.gtest pkgs.gbenchmark ];
+          buildInputs = [ pkgs.gtest (gbenchmarkFor pkgs) ];
 
           cmakeBuildType = if sanitize then "Debug" else "Release";
           cmakeFlags = [ (pkgs.lib.cmakeBool "ELEMGRAPH_SANITIZE" sanitize) ];
@@ -52,8 +69,12 @@
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          packages = [ pkgs.cmake pkgs.ninja pkgs.gtest pkgs.gbenchmark pkgs.clang-tools ];
+          packages = [ pkgs.cmake pkgs.ninja pkgs.gtest (gbenchmarkFor pkgs) pkgs.clang-tools ];
           hardeningDisable = [ "all" ];
+        };
+        # For bench/plot.py: nix develop .#plot -c python3 bench/plot.py ...
+        plot = pkgs.mkShell {
+          packages = [ (pkgs.python3.withPackages (ps: [ ps.matplotlib ])) ];
         };
       });
     };
