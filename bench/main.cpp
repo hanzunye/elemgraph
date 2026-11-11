@@ -19,6 +19,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <span>
 #include <string>
 
 #include "suites.hpp"
@@ -126,14 +127,14 @@ int main(int argc, char** argv) {
     argc = kept;
 
     // From 2^12 vertices, which fit in L1 and L2, to 2^22, which only fit in
-    // DRAM (DESIGN.md §6).
-    static constexpr unsigned full_sizes[] = {12, 14, 16, 18, 20, 22};
+    // DRAM (DESIGN.md §6). Above 2^18 every size is measured: that is where
+    // the per-vertex arrays outgrow the caches.
+    static constexpr unsigned full_sizes[] = {12, 14, 16, 18, 19, 20, 21, 22};
     static constexpr unsigned smoke_sizes[] = {8};
-    if (smoke) {
-        elemgraph::bench::register_bfs(smoke_sizes);
-    } else {
-        elemgraph::bench::register_bfs(full_sizes);
-    }
+    const std::span<const unsigned> sizes = smoke ? std::span<const unsigned>(smoke_sizes)
+                                                  : std::span<const unsigned>(full_sizes);
+    elemgraph::bench::register_bfs(sizes);
+    elemgraph::bench::register_connectivity(sizes);
 
     benchmark::AddCustomContext("cpu_model", cpu_model());
 #if defined(__APPLE__)

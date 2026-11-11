@@ -9,6 +9,7 @@ target_compile_features(elemgraph_generators INTERFACE cxx_std_20)
 find_package(benchmark REQUIRED)
 add_executable(elemgraph_bench
     bfs.cpp
+    connectivity.cpp
     main.cpp
 )
 target_link_libraries(elemgraph_bench PRIVATE
