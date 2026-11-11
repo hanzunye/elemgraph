@@ -17,6 +17,10 @@
           pkgs.gbenchmark.overrideAttrs (old: {
             propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ pkgs.libpfm ];
             cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DBENCHMARK_ENABLE_LIBPFM:BOOL=TRUE" ];
+            # With libpfm, Google Benchmark's own tests expect to open hardware
+            # counters, which neither the Nix build sandbox nor the CI virtual
+            # machines allow. The same tests run in the build without libpfm.
+            doCheck = false;
           })
         else
           pkgs.gbenchmark;
