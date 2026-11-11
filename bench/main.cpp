@@ -1,12 +1,6 @@
-// Benchmark driver. Results for the README come from the release build:
-//
-//   cmake --workflow --preset release
-//   ./build/release/bench/elemgraph_bench
-//       --benchmark_repetitions=10 --benchmark_report_aggregates_only=true
-//       --benchmark_out_format=json --benchmark_out=bench/results/<machine>/<date>.json
-//
-// (one command, split over lines here; a backslash at the end of a //
-// comment would continue the comment into the next line, which GCC rejects)
+// Benchmark driver. Results for the README come from bench/run.sh, which
+// builds the release preset, checks and records the machine's settings, and
+// runs this binary 10 times per benchmark into bench/results/<machine>/.
 //
 // --smoke runs every benchmark on tiny graphs only. CI does that, together
 // with --benchmark_min_time=1x, to check that the benchmarks still run; CI
