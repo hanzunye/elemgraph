@@ -1,6 +1,6 @@
 # elemgraph — Design
 
-> Status: draft for v0.1. This document describes *why* the library looks the way it does.
+> Status: v0.1.0. This document describes *why* the library looks the way it does.
 > Measured results live in `bench/results/` and are summarized in the README.
 
 ## 1. Purpose

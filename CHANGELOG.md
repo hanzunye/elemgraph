@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.1.0 (unreleased)
+## v0.1.0 (2026-11-12)
 
 This is the first release. It contains two graph representations and the elementary algorithms,
 two ways to find bridges and cut vertices, tests against brute-force references, and the first
