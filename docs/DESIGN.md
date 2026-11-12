@@ -185,15 +185,16 @@ when an algorithm is called many times on the same graph.
   - Apple M2 (macOS; 4 performance + 4 efficiency cores; 16 GB). macOS offers neither core pinning nor a
     fixed CPU frequency. Benchmarks run at the highest QoS class so that they stay on the performance cores,
     and this limitation is stated with the results.
-  - An x86-64 laptop running Linux on bare metal: pinned core, fixed frequency, turbo disabled, hardware
-    counters via `perf stat`.
+  - An x86-64 laptop running Linux on bare metal (Intel Core i7-10750H): pinned core, fixed frequency,
+    turbo disabled, hardware counters.
   - CI runners are virtual machines. They run every benchmark once on tiny inputs as a smoke test;
     CI timings are never reported.
 - **Metrics:**
   - Median wall time with spread over ≥ 10 repetitions.
   - Edges per second.
   - Memory footprint of the representation.
-  - Hardware counters via `perf stat` (cache misses, LLC misses, branch misses; Linux only).
+  - Hardware counters for every benchmark, through Google Benchmark built with libpfm: cycles,
+    instructions, cache misses and branch mispredictions (Linux only).
 - **Protocol:**
   - Release build.
   - Generation and construction are timed separately from the algorithm.
@@ -206,8 +207,9 @@ when an algorithm is called many times on the same graph.
 
 - CMake (≥ 3.25) + Ninja. Header-only `INTERFACE` target `elemgraph::elemgraph`.
 - Nix flake outputs:
-  - `devShells.default`: gcc, clang, cmake, ninja, gtest, google-benchmark, python3 (pandas, matplotlib), and perf on Linux.
-  - `packages.default`: installs headers and the CMake package config.
+  - `devShells.default`: the platform's compiler (GCC on Linux, Clang on macOS), cmake, ninja, gtest,
+    google-benchmark (with libpfm on Linux) and clang-tools.
+  - `devShells.plot`: python3 with matplotlib, for `bench/plot.py`.
   - `checks`: on Linux, build + tests with GCC and Clang plus an ASan/UBSan build; on macOS, Clang only
     (there nixpkgs builds GoogleTest and Google Benchmark against libc++, which a GCC/libstdc++ build cannot
     link against). `nix flake check` runs all checks of the current platform.
@@ -250,8 +252,8 @@ elemgraph/
 
 | Version | Content |
 |---------|---------|
-| v0.1 | CSR + adjacency list, BFS / DFS / connected components, bridges / cut vertices / 2-connectivity with both approaches, tests, Nix flake, CI, first benchmarks (Q1, Q2, Q4) |
-| v0.2 | Certificates and checkers (Q6), the `EdgeIds` and `Alloc` template parameters, alignment and bitset experiments (Q3), 2-edge-connected and biconnected components, perf counters on bare-metal Linux, a SNAP graph |
+| v0.1 | CSR + adjacency list, BFS / DFS / connected components, bridges / cut vertices / 2-connectivity with both approaches, tests, Nix flake, CI, first benchmarks (Q1, Q4) on two machines, with hardware counters on Linux |
+| v0.2 | Certificates and checkers (Q6), 32- vs. 64-bit indices (Q2), the `EdgeIds` and `Alloc` template parameters, alignment and bitset experiments (Q3), 2-edge-connected and biconnected components, a SNAP graph |
 | v0.3 | Certifying 3-edge-connectivity [Mehlhorn, Neumann, Schmidt 2017], built on the chain decomposition |
 | v0.4 | Vertex reordering (Q5), weighted CSR and Dijkstra heap variants, instruction-count regression benchmarks in CI (Cachegrind) |
 | v0.5 | Scalability: direction-optimizing BFS, parallel BFS and connected components |
