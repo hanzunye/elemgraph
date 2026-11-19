@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Library
+
+- Certifying tests for 2-edge-connectivity and 2-vertex-connectivity.
+  - `certify_two_edge_connectivity()` and `certify_two_vertex_connectivity()` answer yes with an
+    ear decomposition, or an open one, taken from the chains. They answer no with a vertex set
+    that at most one edge leaves, or that at most one vertex separates from the rest.
+  - `check_two_edge_connectivity()` and `check_two_vertex_connectivity()` verify these
+    certificates in O(n + m) time, using only the graph.
+
+### Correctness
+
+- [`docs/certifying-connectivity.md`](docs/certifying-connectivity.md) proves two things: every
+  certificate that the checkers accept proves its answer, and the tests always find such a
+  certificate.
+- The answers are compared with brute-force references, and every certificate is checked, on
+  random multigraphs and on random graphs built from ears. The checkers must also reject
+  certificates that were made wrong on purpose.
+
 ## v0.1.0 (2026-11-12)
 
 This is the first release. It contains two graph representations and the elementary algorithms,

@@ -99,6 +99,39 @@ TEST(RandomTree, IsConnectedWithNMinusOneEdges) {
     });
 }
 
+TEST(RandomEarGraph, IsTwoEdgeConnected) {
+    const auto make = [](rng& r) {
+        return random_ear_graph(r, static_cast<std::uint32_t>(r.below(15)), false);
+    };
+    for_each_random_graph(0, 300, make, [](const input_graph& g) {
+        EXPECT_GE(g.n, 2u);
+        EXPECT_EQ(connected_components(g), std::vector<std::uint32_t>(g.n, 0));
+        EXPECT_TRUE(bridges(g).empty());
+    });
+}
+
+TEST(RandomEarGraph, WithOpenEarsIsTwoVertexConnected) {
+    const auto make = [](rng& r) {
+        return random_ear_graph(r, static_cast<std::uint32_t>(r.below(15)), true);
+    };
+    for_each_random_graph(0, 300, make, [](const input_graph& g) {
+        EXPECT_EQ(connected_components(g), std::vector<std::uint32_t>(g.n, 0));
+        EXPECT_TRUE(cut_vertices(g).empty());
+    });
+}
+
+// Without open_only, some graphs have a cut vertex, so the tests of
+// 2-edge-connectivity see 2-edge-connected graphs that are not
+// 2-vertex-connected.
+TEST(RandomEarGraph, ClosedEarsGiveCutVertices) {
+    int with_cut_vertex = 0;
+    for (std::uint64_t seed = 0; seed < 100; ++seed) {
+        rng r(seed);
+        with_cut_vertex += cut_vertices(random_ear_graph(r, 10, false)).empty() ? 0 : 1;
+    }
+    EXPECT_GT(with_cut_vertex, 20);
+}
+
 TEST(RandomGraphs, SameSeedGivesSameGraph) {
     rng a(123);
     rng b(123);

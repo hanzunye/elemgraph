@@ -138,6 +138,8 @@ for a disconnected graph, a vertex set without outgoing edges. elemgraph returns
 and a separate checker verifies them in `O(n + m)` without trusting the algorithm, in the sense of
 certifying algorithms [McConnell et al. 2011]. Because the checker is linear, it also validates the
 results on the large benchmark graphs, where the brute-force references below are far too slow.
+[certifying-connectivity.md](certifying-connectivity.md) proves that every certificate the checker
+accepts proves its answer, and that the tests always find such a certificate.
 
 **Brute-force references** (small graphs only): an edge is a bridge iff removing it increases the
 number of components; a vertex is a cut vertex iff removing it does. These are `O(m·(n+m))` and `O(n·(n+m))`,
@@ -231,7 +233,7 @@ elemgraph/
 │       ├── bfs.hpp, dfs.hpp
 │       ├── components.hpp, union_find.hpp
 │       ├── connectivity.hpp        # lowpoint + chain decomposition
-│       └── certificates.hpp        # certificate checkers
+│       └── certifying.hpp          # certifying 2-edge-/2-vertex-connectivity tests and checkers
 ├── tests/
 ├── bench/
 │   ├── generators/                 # grid, G(n,m), R-MAT, DIMACS reader (also used by tests)
