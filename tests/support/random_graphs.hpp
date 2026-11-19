@@ -82,6 +82,52 @@ inline input_graph random_tree(rng& r, vertex n) {
     return g;
 }
 
+// A graph built from an ear decomposition: a cycle of 2 to 5 vertices (2: two
+// parallel edges), then `ears` more ears with 0 to 3 new vertices each,
+// between random vertices of the graph so far. With `open_only`, every ear
+// after the first is a path with two different ends, so the graph is
+// 2-vertex-connected once it has at least 3 vertices [Whitney 1932].
+// Otherwise an ear is a cycle at one vertex with probability 1/4 (with no new
+// vertex, a self-loop), and the graph is 2-edge-connected [Robbins 1939].
+// Vertex labels, edge order and edge orientation are shuffled.
+inline input_graph random_ear_graph(rng& r, std::uint32_t ears, bool open_only) {
+    input_graph g{0, {}};
+    const auto add_path = [&](vertex from, vertex to, std::uint64_t inner) {
+        vertex previous = from;
+        for (std::uint64_t k = 0; k < inner; ++k) {
+            g.edges.push_back({previous, g.n});
+            previous = g.n++;
+        }
+        g.edges.push_back({previous, to});
+    };
+
+    const auto cycle = static_cast<vertex>(2 + r.below(4));
+    g.n = 1;
+    add_path(0, 0, cycle - 1);
+    for (std::uint32_t i = 0; i < ears; ++i) {
+        const auto a = static_cast<vertex>(r.below(g.n));
+        auto b = a;
+        if (open_only || !r.chance(1, 4)) {
+            while (b == a) {
+                b = static_cast<vertex>(r.below(g.n));
+            }
+        }
+        add_path(a, b, r.below(4));
+    }
+
+    std::vector<vertex> label(g.n);
+    std::iota(label.begin(), label.end(), vertex{0});
+    r.shuffle(label);
+    for (edge& e : g.edges) {
+        e = {label[e.u], label[e.v]};
+        if (r.chance(1, 2)) {
+            std::swap(e.u, e.v);
+        }
+    }
+    r.shuffle(g.edges);
+    return g;
+}
+
 // Default inputs for differential tests: up to 40 vertices and up to 2n edges.
 // Graphs this sparse have bridges, cut vertices and cycles at the same time.
 inline input_graph small_random_multigraph(rng& r) {
