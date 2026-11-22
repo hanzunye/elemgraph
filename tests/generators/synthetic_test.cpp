@@ -57,6 +57,24 @@ TEST(Gnm, CanBeComplete) {
     EXPECT_TRUE(is_canonical(g));
 }
 
+TEST(GnmWithCycle, IsTwoVertexConnected) {
+    for (const std::uint64_t seed : {1u, 2u, 3u}) {
+        const input_graph g = gnm_with_cycle(60, 40, seed);
+        EXPECT_TRUE(is_canonical(g));
+        EXPECT_GE(g.edges.size(), 40u);
+        EXPECT_LE(g.edges.size(), 100u);
+        EXPECT_EQ(test::connected_components(g), std::vector<std::uint32_t>(60, 0));
+        EXPECT_THAT(test::cut_vertices(g), IsEmpty());
+    }
+}
+
+TEST(GnmWithCycle, ContainsItsGnm) {
+    const input_graph g = gnm_with_cycle(1000, 3000, 1);
+    const input_graph base = gnm(1000, 3000, 1);
+    EXPECT_TRUE(std::includes(g.edges.begin(), g.edges.end(), base.edges.begin(),
+                              base.edges.end()));
+}
+
 TEST(Gnm, SeedSelectsTheGraph) {
     EXPECT_EQ(gnm(100, 200, 1), gnm(100, 200, 1));
     EXPECT_NE(gnm(100, 200, 1), gnm(100, 200, 2));

@@ -10,6 +10,15 @@
     that at most one edge leaves, or that at most one vertex separates from the rest.
   - `check_two_edge_connectivity()` and `check_two_vertex_connectivity()` verify these
     certificates in O(n + m) time, using only the graph.
+  - Of the two sides of a "no" certificate, the smaller one is returned, since it is faster to
+    check: for a disconnected graph, a smallest component.
+
+### Benchmarks
+
+- Q6, the cost of certification (`bench/certifying.cpp`). Each run times the DFS, the test
+  without a certificate, the two certifying tests and the two checkers, all from the same search.
+  The inputs are two classes whose answers are yes (grids, and a new class `gnm_cycle`: G(n,m)
+  plus a Hamiltonian cycle) and one whose answers are no (G(n,m)).
 
 ### Correctness
 

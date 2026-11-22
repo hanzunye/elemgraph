@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "../concepts.hpp"
@@ -78,18 +79,55 @@ inline bool has_second_tree(const dfs_result& search) {
     return false;
 }
 
-// Appends the vertices of the DFS subtree of x to `out`, x first. They form
-// the block of the preorder that starts at x: a later vertex belongs to it
-// iff its parent does, that is, iff its parent's DFS number is at least x's.
-inline void append_subtree(const dfs_result& search, vertex x, std::vector<vertex>& out) {
-    out.push_back(x);
-    for (std::size_t k = std::size_t{search.number[x]} + 1; k < search.order.size(); ++k) {
-        const vertex y = search.order[k];
-        const vertex p = search.parent[y];
+// The end of the block of the preorder that holds the DFS subtree of x. The
+// block starts at x, and a later vertex belongs to it iff its parent does,
+// that is, iff its parent's DFS number is at least x's.
+inline std::size_t subtree_end(const dfs_result& search, vertex x) {
+    std::size_t k = std::size_t{search.number[x]} + 1;
+    while (k < search.order.size()) {
+        const vertex p = search.parent[search.order[k]];
         if (p == no_vertex || search.number[p] < search.number[x]) {
             break;
         }
-        out.push_back(y);
+        ++k;
+    }
+    return k;
+}
+
+// The block of the preorder that holds a smallest DFS tree, i.e. a smallest
+// component: each tree is the block from its root to the next root.
+inline std::pair<std::size_t, std::size_t> smallest_tree(const dfs_result& search) {
+    std::pair<std::size_t, std::size_t> best{0, search.order.size()};
+    std::size_t begin = 0;
+    for (std::size_t k = 1; k <= search.order.size(); ++k) {
+        if (k == search.order.size() || search.parent[search.order[k]] == no_vertex) {
+            if (k - begin < best.second - best.first) {
+                best = {begin, k};
+            }
+            begin = k;
+        }
+    }
+    return best;
+}
+
+// Appends to `out` the smaller of two vertex sets: the block order[lo, hi) of
+// the preorder, or all other vertices except `skip` (no_vertex: none). The
+// certificates below are symmetric in the two sets, and the smaller one is
+// faster to check.
+inline void append_smaller_side(const dfs_result& search, std::size_t lo, std::size_t hi,
+                                vertex skip, std::vector<vertex>& out) {
+    const std::size_t n = search.order.size();
+    const std::size_t inside = hi - lo;
+    const std::size_t outside = n - inside - (skip == no_vertex ? 0 : 1);
+    if (inside <= outside) {
+        out.insert(out.end(), search.order.begin() + static_cast<std::ptrdiff_t>(lo),
+                   search.order.begin() + static_cast<std::ptrdiff_t>(hi));
+        return;
+    }
+    for (std::size_t k = 0; k < n; ++k) {
+        if ((k < lo || k >= hi) && search.order[k] != skip) {
+            out.push_back(search.order[k]);
+        }
     }
 }
 
@@ -122,12 +160,14 @@ void certify_two_edge_connectivity(const Graph& g, const dfs_result& search,
     chain_connectivity(g, search, workspace.result, workspace.chains, certificate.ears);
 
     if (detail::has_second_tree(search)) {
-        // The first tree is a component: no edge leaves it.
-        detail::append_subtree(search, search.order[0], certificate.side);
+        // A component: no edge leaves it.
+        const auto [lo, hi] = detail::smallest_tree(search);
+        detail::append_smaller_side(search, lo, hi, no_vertex, certificate.side);
     } else if (const vertex x = detail::first_bridge_end(search, workspace.chains.state);
                x != no_vertex) {
-        // Only the bridge t(x) leaves the subtree of x.
-        detail::append_subtree(search, x, certificate.side);
+        // Only the bridge t(x) leaves the subtree of x, or the rest.
+        detail::append_smaller_side(search, search.number[x], detail::subtree_end(search, x),
+                                    no_vertex, certificate.side);
     } else {
         certificate.two_edge_connected = true;  // the chains are the ears
         return;
@@ -151,8 +191,9 @@ void certify_two_vertex_connectivity(const Graph& g, const dfs_result& search,
     chain_connectivity(g, search, workspace.result, workspace.chains, chains);
 
     if (detail::has_second_tree(search)) {
-        // The first tree is a component: nothing separates it from the rest.
-        detail::append_subtree(search, search.order[0], certificate.side);
+        // A component: nothing separates it from the rest.
+        const auto [lo, hi] = detail::smallest_tree(search);
+        detail::append_smaller_side(search, lo, hi, no_vertex, certificate.side);
         chains.clear();
         return;
     }
@@ -162,12 +203,13 @@ void certify_two_vertex_connectivity(const Graph& g, const dfs_result& search,
         // edge, x separates its descendants from the rest; otherwise x is a
         // leaf and its parent separates it from the rest, which is not empty
         // because g has at least three vertices.
-        detail::append_subtree(search, x, certificate.side);
         if (g.degree(x) >= 2) {
             certificate.separator = x;
-            certificate.side.erase(certificate.side.begin());
+            detail::append_smaller_side(search, std::size_t{search.number[x]} + 1,
+                                        detail::subtree_end(search, x), x, certificate.side);
         } else {
             certificate.separator = search.parent[x];
+            certificate.side.push_back(x);
         }
         chains.clear();
         return;
@@ -181,7 +223,8 @@ void certify_two_vertex_connectivity(const Graph& g, const dfs_result& search,
             const vertex v = vs.front();
             const vertex c = vs[vs.size() - 2];
             certificate.separator = v;
-            detail::append_subtree(search, c, certificate.side);
+            detail::append_smaller_side(search, search.number[c], detail::subtree_end(search, c),
+                                        v, certificate.side);
             chains.clear();
             return;
         }

@@ -129,6 +129,7 @@ int main(int argc, char** argv) {
                                                   : std::span<const unsigned>(full_sizes);
     elemgraph::bench::register_bfs(sizes);
     elemgraph::bench::register_connectivity(sizes);
+    elemgraph::bench::register_certifying(sizes);
 
     benchmark::AddCustomContext("cpu_model", cpu_model());
 #if defined(__APPLE__)

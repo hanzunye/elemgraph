@@ -133,14 +133,16 @@ TEST(Certifying, CycleWithChordHasAnOpenEar) {
 }
 
 TEST(Certifying, PathIsSplitAtItsFirstBridge) {
-    // DFS 0 -> 1 -> 2. The first bridge in preorder is t(1) = {0, 1}.
+    // DFS 0 -> 1 -> 2. The first bridge in preorder is t(1) = {0, 1}. Only it
+    // leaves the subtree {1, 2} of 1, and the smaller other side {0}.
     const csr_graph g = graph(3, {{0, 1}, {1, 2}});
     const auto edge = certify_two_edge_connectivity(g);
     EXPECT_FALSE(edge.two_edge_connected);
-    EXPECT_THAT(edge.side, ElementsAre(1u, 2u));  // the subtree of 1
+    EXPECT_THAT(edge.side, ElementsAre(0u));
     EXPECT_TRUE(check_two_edge_connectivity(g, edge));
 
-    // 1 has a second edge, so 1 separates its descendants from the rest.
+    // 1 has a second edge, so 1 separates its descendants {2} from the rest
+    // {0}. Of two sides of the same size, the descendants are returned.
     const auto two_vertex = certify_two_vertex_connectivity(g);
     EXPECT_FALSE(two_vertex.two_vertex_connected);
     EXPECT_EQ(two_vertex.separator, 1u);
@@ -163,7 +165,7 @@ TEST(Certifying, BridgeNextToParallelEdges) {
     const csr_graph g = graph(3, {{0, 1}, {1, 2}, {2, 1}});
     const auto edge = certify_two_edge_connectivity(g);
     EXPECT_FALSE(edge.two_edge_connected);
-    EXPECT_THAT(edge.side, ElementsAre(1u, 2u));
+    EXPECT_THAT(edge.side, ElementsAre(0u));  // smaller than the subtree {1, 2}
     EXPECT_TRUE(check_two_edge_connectivity(g, edge));
 
     const auto two_vertex = certify_two_vertex_connectivity(g);
@@ -195,7 +197,8 @@ TEST(Certifying, TwoTrianglesSharingAVertex) {
     EXPECT_FALSE(check_two_vertex_connectivity(g, wrong));
 }
 
-TEST(Certifying, DisconnectedGraphIsSplitIntoItsFirstComponent) {
+TEST(Certifying, DisconnectedGraphIsSplitOffASmallestComponent) {
+    // Two triangles: of components of the same size, the first is returned.
     const csr_graph g = graph(6, {{0, 1}, {1, 2}, {2, 0}, {3, 4}, {4, 5}, {5, 3}});
     const auto edge = certify_two_edge_connectivity(g);
     EXPECT_FALSE(edge.two_edge_connected);
@@ -206,6 +209,33 @@ TEST(Certifying, DisconnectedGraphIsSplitIntoItsFirstComponent) {
     EXPECT_FALSE(two_vertex.two_vertex_connected);
     EXPECT_EQ(two_vertex.separator, no_vertex);
     EXPECT_THAT(two_vertex.side, ElementsAre(0u, 1u, 2u));
+    EXPECT_TRUE(check_two_vertex_connectivity(g, two_vertex));
+}
+
+TEST(Certifying, IsolatedVertexIsTheSmallestComponent) {
+    // A triangle, an isolated vertex 3 and an edge 4-5.
+    const csr_graph g = graph(6, {{0, 1}, {1, 2}, {2, 0}, {4, 5}});
+    const auto edge = certify_two_edge_connectivity(g);
+    EXPECT_THAT(edge.side, ElementsAre(3u));
+    EXPECT_TRUE(check_two_edge_connectivity(g, edge));
+    const auto two_vertex = certify_two_vertex_connectivity(g);
+    EXPECT_EQ(two_vertex.separator, no_vertex);
+    EXPECT_THAT(two_vertex.side, ElementsAre(3u));
+    EXPECT_TRUE(check_two_vertex_connectivity(g, two_vertex));
+}
+
+TEST(Certifying, LargeSubtreeIsReplacedByTheRest) {
+    // A path 0 - 1 - 2 - 3 - 4 whose end 4 closes a triangle with 2 and 3.
+    // DFS 0 -> 1 -> 2 -> 3 -> 4. The first bridge is t(1), and only it leaves
+    // the subtree {1, 2, 3, 4}; the smaller side is {0}. For 2-vertex: 1 has
+    // a second edge and separates {2, 3, 4} from {0}.
+    const csr_graph g = graph(5, {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 2}});
+    const auto edge = certify_two_edge_connectivity(g);
+    EXPECT_THAT(edge.side, ElementsAre(0u));
+    EXPECT_TRUE(check_two_edge_connectivity(g, edge));
+    const auto two_vertex = certify_two_vertex_connectivity(g);
+    EXPECT_EQ(two_vertex.separator, 1u);
+    EXPECT_THAT(two_vertex.side, ElementsAre(0u));
     EXPECT_TRUE(check_two_vertex_connectivity(g, two_vertex));
 }
 

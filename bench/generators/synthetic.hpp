@@ -54,6 +54,25 @@ inline input_graph gnm(vertex n, std::uint32_t m, std::uint64_t seed) {
     return g;
 }
 
+// G(n, m) together with a Hamiltonian cycle through the vertices in random
+// order: a random graph that is 2-vertex-connected, which Q6 needs for
+// certificates that answer yes. The cycle is drawn from its own random
+// stream (seed + 1). Where it repeats an edge of G(n, m), one copy is kept,
+// so the graph has between m and m + n edges. Requires n >= 3.
+inline input_graph gnm_with_cycle(vertex n, std::uint32_t m, std::uint64_t seed) {
+    assert(n >= 3);
+    input_graph g = gnm(n, m, seed);
+    std::vector<vertex> order(n);
+    std::iota(order.begin(), order.end(), vertex{0});
+    rng r(seed + 1);
+    r.shuffle(order);
+    for (vertex i = 0; i < n; ++i) {
+        g.edges.push_back({order[i], order[(i + 1) % n]});
+    }
+    canonicalize(g);
+    return g;
+}
+
 // R-MAT [Chakrabarti, Zhan, Faloutsos 2004] with the Graph500 parameters
 // a = 0.57, b = c = 0.19, d = 0.05: power-law degrees. The graph has
 // n = 2^scale vertices; edge_factor * n edges are drawn, each by picking one

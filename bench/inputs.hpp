@@ -13,8 +13,9 @@
 
 namespace elemgraph::bench {
 
-enum class graph_class { grid, gnm, rmat };
+enum class graph_class { grid, gnm, rmat, gnm_cycle };
 
+// The classes of Q1 and Q4. gnm_cycle is used by Q6 only.
 inline constexpr graph_class all_graph_classes[] = {graph_class::grid, graph_class::gnm,
                                                     graph_class::rmat};
 
@@ -26,6 +27,8 @@ inline std::string_view name(graph_class c) {
         return "gnm";
     case graph_class::rmat:
         return "rmat";
+    case graph_class::gnm_cycle:
+        return "gnm_cycle";
     }
     return "?";
 }
@@ -37,6 +40,8 @@ inline constexpr std::uint64_t seed = 1;
 //   gnm   4 n edges: average degree 8.
 //   rmat  edge factor 8, so 8 n edges are drawn and fewer remain after repeats
 //         and self-loops are removed; many vertices stay isolated.
+//   gnm_cycle  the gnm graph plus a Hamiltonian cycle: 2-vertex-connected,
+//         average degree just under 10.
 inline gen::input_graph generate(graph_class c, unsigned log_n) {
     const vertex n = vertex{1} << log_n;
     switch (c) {
@@ -48,6 +53,8 @@ inline gen::input_graph generate(graph_class c, unsigned log_n) {
         return gen::gnm(n, 4 * n, seed);
     case graph_class::rmat:
         return gen::rmat(log_n, 8, seed);
+    case graph_class::gnm_cycle:
+        return gen::gnm_with_cycle(n, 4 * n, seed);
     }
     return {};
 }
