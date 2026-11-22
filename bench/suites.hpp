@@ -12,4 +12,7 @@ void register_bfs(std::span<const unsigned> log_sizes);
 // Q4, the lowpoint algorithm against the chain decomposition: connectivity.cpp.
 void register_connectivity(std::span<const unsigned> log_sizes);
 
+// Q6, what certifying 2-edge- and 2-vertex-connectivity costs: certifying.cpp.
+void register_certifying(std::span<const unsigned> log_sizes);
+
 }  // namespace elemgraph::bench
