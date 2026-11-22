@@ -111,13 +111,19 @@ Throughout, "the rest" is R = V ∖ (S ∪ X).
 | Case | 2-edge-connectivity | 2-vertex-connectivity |
 |------|---------------------|-----------------------|
 | too few vertices | n < 2: no certificate needed | n < 3: no certificate needed |
-| G disconnected | S = the first DFS tree | S = the first DFS tree, X = ∅ |
+| G disconnected | S = a smallest DFS tree | S = a smallest DFS tree, X = ∅ |
 | a bridge t(x), x first in preorder | S = T(x) | deg(x) ≥ 2: S = T(x) ∖ {x}, X = {x}; else S = {x}, X = {p(x)} |
 | a cycle chain C ≠ C₁ with first vertex v, ending with t(c) | (allowed: a closed ear) | S = T(c), X = {v} |
 | none of these | yes: the chains | yes: the chains |
 
-The DFS trees are the components of G, so no edge leaves the first tree. If G is disconnected,
-there is a second tree, and R is not empty.
+The certificates for "no" are symmetric: the edges that leave S are those that leave V ∖ S, and
+a separation stays one when S and R swap places. Wherever the table names a set S, the tests
+return the smaller of S and the other side (V ∖ S, or R), since a smaller set is faster to check.
+The proofs below show that the sets in the table are certificates; their other sides are then
+certificates as well.
+
+The DFS trees are the components of G, so no edge leaves a tree. If G is disconnected, there is
+more than one tree, and R is not empty.
 
 **Lemma 2 (bridges).** If t(x) is a bridge, t(x) is the only edge that leaves T(x). Every other
 edge at x goes to a proper descendant of x.
