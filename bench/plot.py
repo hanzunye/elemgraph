@@ -3,14 +3,18 @@
 
     nix develop .#plot -c python3 bench/plot.py bench/results/m2/2026-11-11.json
 
-writes two figures next to the JSON, each in a light and a dark variant:
+writes the figures for the questions that the run measured next to the JSON,
+each in a light and a dark variant:
 
     <date>-q1.svg, <date>-q1-dark.svg   BFS: adjacency list vs. CSR
     <date>-q4.svg, <date>-q4-dark.svg   chain decomposition vs. lowpoint
+    <date>-q6.svg, <date>-q6-dark.svg   certifying 2-vertex-connectivity and
+                                        checking the certificate vs. the
+                                        plain test
 
-With several results files and --out DIR, it writes q1.svg, q4.svg and their
-dark variants into DIR instead, with one panel (Q1) or one row (Q4) per file,
-to compare machines.
+With several results files and --out DIR, it writes q1.svg, q4.svg, q6.svg and
+their dark variants into DIR instead. Each figure has one panel (Q1) or one row
+(Q4, Q6) per file that measured its question, to compare machines.
 
 With --tables it also prints the result tables as Markdown, and the hardware
 counters per vertex if the run recorded them. All values are medians of the
@@ -28,6 +32,12 @@ matplotlib.use("svg")
 import matplotlib.pyplot as plt  # noqa: E402  (after choosing the backend)
 
 CLASSES = [("grid", "grid"), ("gnm", "G(n,m)"), ("rmat", "R-MAT")]
+# Q6 needs graphs whose answers are yes, so it adds gnm_cycle and leaves out
+# R-MAT.
+CLASSES_Q6 = [("grid", "grid"), ("gnm_cycle", "G(n,m) + cycle"), ("gnm", "G(n,m)")]
+# Each class keeps its color in every figure. gnm_cycle takes R-MAT's, since
+# the two never appear in the same figure.
+SLOT = {"grid": 0, "gnm": 1, "rmat": 2, "gnm_cycle": 2}
 
 # Colors by role, from a palette checked for color-vision deficiencies; the
 # dark variant uses the same hues, stepped for a dark background.
@@ -103,10 +113,10 @@ def style(ax, t):
     ax.set_axisbelow(True)
 
 
-def plot_lines(ax, t, sizes, ratio):
+def plot_lines(ax, t, sizes, ratio, classes=CLASSES):
     """One line per graph class; ratio(class, size) gives the y value."""
-    for (key, label), color in zip(CLASSES, t["series"]):
-        ax.plot(sizes, [ratio(key, s) for s in sizes], color=color, linewidth=1.5,
+    for key, label in classes:
+        ax.plot(sizes, [ratio(key, s) for s in sizes], color=t["series"][SLOT[key]], linewidth=1.5,
                 solid_joinstyle="round", solid_capstyle="round", marker="o", markersize=6,
                 markeredgecolor=t["surface"], markeredgewidth=1.5, label=label, zorder=3)
     ax.axhline(1, color=t["baseline"], linewidth=0.75, zorder=2)
@@ -186,19 +196,95 @@ def figure_q4(runs, t, path, min_log_n):
     save(fig, path, t)
 
 
+def figure_q6(runs, t, path, min_log_n):
+    """One row per run: producing a certificate, and checking it."""
+    fig, axes = plt.subplots(len(runs), 2, figsize=(8.8, 3.6 * len(runs)), sharey=True,
+                             squeeze=False)
+    fig.set_facecolor(t["surface"])
+    for row, run in zip(axes, runs):
+
+        def plain_test(c, s, run=run):
+            return run.medians[f"certifying/dfs/{c}/{s}"] + run.medians[f"certifying/plain/{c}/{s}"]
+
+        def certify(c, s, run=run):
+            return ((run.medians[f"certifying/dfs/{c}/{s}"] +
+                     run.medians[f"certifying/certify_vertex/{c}/{s}"]) / plain_test(c, s))
+
+        def check(c, s, run=run):
+            return run.medians[f"certifying/check_vertex/{c}/{s}"] / plain_test(c, s)
+
+        sizes = run.sizes("certifying/dfs/", min_log_n)
+        # On G(n,m) the answers are no, and the certificates are a single
+        # vertex, so checking them takes almost no time.
+        yes = [cls for cls in CLASSES_Q6 if cls[0] != "gnm"]
+        for ax, ratio, classes, text in (
+                (row[0], certify, CLASSES_Q6, "Certifying 2-vertex-connectivity, with DFS"),
+                (row[1], check, yes, "Checking the certificate (answer yes)")):
+            style(ax, t)
+            plot_lines(ax, t, sizes, ratio, classes)
+            title(ax, t, text if len(runs) == 1 else f"{run.label()}: {text[0].lower()}{text[1:]}")
+        row[0].set_ylabel("time ÷ plain test with DFS\n(above 1: slower than the plain test)",
+                          color=t["secondary"], fontsize=9, linespacing=1.5)
+    # From 0, so that the checking times read as fractions of the plain test,
+    # with room above the highest point.
+    top = max(max(line.get_ydata()) for ax in axes.flat for line in ax.lines)
+    axes[0][0].set_ylim(0, 1.1 * top)
+    legend(axes[0][0], t, "lower right")
+    fig.tight_layout(w_pad=3, h_pad=2)
+    save(fig, path, t)
+
+
 def markdown_tables(run):
     def time(us):
+        if us < 10:
+            return f"{us:.2f}"
         return f"{us:,.1f}" if us < 1000 else f"{us:,.0f}"
+
+    def ratio(r):
+        return "< 0.01" if r < 0.005 else f"{r:.2f}"
 
     def counter_cells(names):
         return [", ".join(fmt.format(run.per_vertex(name, key)) for name in names)
                 for key, _, fmt in COUNTERS]
 
-    labels = dict(CLASSES)
+    labels = dict(CLASSES + CLASSES_Q6)
     sizes_q4 = run.sizes("connectivity/dfs/")
     sizes_q1 = run.sizes("bfs/flat/csr_graph/")
+    sizes_q6 = run.sizes("certifying/dfs/")
     counters = run.has_counters()
     lines = []
+    if sizes_q6:
+        parts = ["certify_edge", "certify_vertex", "check_edge", "check_vertex"]
+        lines += ["Times in µs:", "",
+                  "| Graph | log2 n | m | Answer | DFS | Plain | Certify edge | Certify vertex |"
+                  " Check edge | Check vertex |",
+                  "|-------|-------:|--:|--------|----:|------:|-------------:|---------------:|"
+                  "-----------:|-------------:|"]
+        for c, _ in CLASSES_Q6:
+            for s in sizes_q6:
+                times = [run.medians[f"certifying/{p}/{c}/{s}"] for p in ["dfs", "plain"] + parts]
+                info = run.counters[f"certifying/dfs/{c}/{s}"]
+                answers = {info["two_edge_connected"], info["two_vertex_connected"]}
+                answer = ("yes" if answers == {1} else "no" if answers == {0} else
+                          f"edge {'yes' if info['two_edge_connected'] else 'no'}, "
+                          f"vertex {'yes' if info['two_vertex_connected'] else 'no'}")
+                lines.append(f"| {labels[c]} | {s} | {int(info['m']):,} | {answer} | " +
+                             " | ".join(time(x) for x in times) + " |")
+        lines += ["", "Ratios, each for 2-edge- and 2-vertex-connectivity:", "",
+                  "| Graph | log2 n | Certify ÷ plain | With DFS | Check ÷ plain with DFS |",
+                  "|-------|-------:|----------------:|---------:|-----------------------:|"]
+        for c, _ in CLASSES_Q6:
+            for s in sizes_q6:
+                def k(part):
+                    return run.medians[f"certifying/{part}/{c}/{s}"]
+                dfs, plain = k("dfs"), k("plain")
+                cells = [(k("certify_edge") / plain, k("certify_vertex") / plain),
+                         ((dfs + k("certify_edge")) / (dfs + plain),
+                          (dfs + k("certify_vertex")) / (dfs + plain)),
+                         (k("check_edge") / (dfs + plain), k("check_vertex") / (dfs + plain))]
+                lines.append(f"| {labels[c]} | {s} | " +
+                             " | ".join(f"{ratio(a)}, {ratio(b)}" for a, b in cells) + " |")
+        lines.append("")
     if sizes_q4:
         lines += ["| Graph | log2 n | m | Bridges | Cut vertices | DFS | Lowpoint | Chains |"
                   " Chains / lowpoint | With DFS |",
@@ -269,12 +355,14 @@ def main():
     else:
         args.out.mkdir(parents=True, exist_ok=True)
         prefix = f"{args.out}/"
+    figures = [("q1", figure_q1, "bfs/flat/csr_graph/"), ("q4", figure_q4, "connectivity/dfs/"),
+               ("q6", figure_q6, "certifying/dfs/")]
     for theme, suffix in (("light", ""), ("dark", "-dark")):
         t = THEMES[theme]
-        if all(run.sizes("bfs/flat/csr_graph/") for run in runs):
-            figure_q1(runs, t, Path(f"{prefix}q1{suffix}.svg"), args.min_log_n)
-        if all(run.sizes("connectivity/dfs/") for run in runs):
-            figure_q4(runs, t, Path(f"{prefix}q4{suffix}.svg"), args.min_log_n)
+        for name, figure, benchmarks in figures:
+            measured = [run for run in runs if run.sizes(benchmarks)]
+            if measured:
+                figure(measured, t, Path(f"{prefix}{name}{suffix}.svg"), args.min_log_n)
     if args.tables:
         for run in runs:
             print(f"\n{run.path}\n")

@@ -19,6 +19,10 @@
   without a certificate, the two certifying tests and the two checkers, all from the same search.
   The inputs are two classes whose answers are yes (grids, and a new class `gnm_cycle`: G(n,m)
   plus a Hamiltonian cycle) and one whose answers are no (G(n,m)).
+- First Q6 results, on the Apple M2:
+  [`bench/results/m2/2026-11-22.md`](bench/results/m2/2026-11-22.md). Certifying costs
+  1.22–1.55× the plain test, DFS included. Checking a "yes" certificate takes 0.29–0.75× the time
+  of the plain test. `bench/plot.py` draws the Q6 figure and prints its tables.
 
 ### Correctness
 
