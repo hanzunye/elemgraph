@@ -17,8 +17,8 @@
 
 namespace elemgraph {
 
-// v0.1 fixes both types to 32 bits; they become template parameters later
-// (DESIGN.md §4.2).
+// Both types are fixed to 32 bits for now; they become template parameters in
+// v0.4 (DESIGN.md §4.2).
 using vertex = std::uint32_t;
 using edge_id = std::uint32_t;
 

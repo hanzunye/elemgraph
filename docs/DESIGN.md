@@ -1,6 +1,6 @@
 # elemgraph — Design
 
-> Status: v0.1.0. This document describes *why* the library looks the way it does.
+> Status: v0.2.0. This document describes *why* the library looks the way it does.
 > Measured results live in `bench/results/` and are summarized in the README.
 
 ## 1. Purpose
@@ -86,8 +86,9 @@ Template parameters:
 - `EdgeIds`: `bool`; when `false` the member is removed via `std::conditional_t` / `[[no_unique_address]]`.
 - `Alloc`: allocator for all arrays (see 4.3).
 
-The parameters are introduced in stages (§9): v0.1 has `V` and `E`, always stores edge ids and uses
-`std::allocator`; `EdgeIds` and `Alloc` follow in v0.2.
+The parameters are introduced in stages (§9). Up to v0.3, vertex ids, edge ids and offsets are fixed
+to `std::uint32_t`, edge ids are always stored and `std::allocator` is used; the parameters follow in
+v0.4.
 
 Construction goes through an `edge_list<V>`: the `csr_graph` constructor fills the CSR arrays with a
 counting sort in `O(n + m)`. Parallel edges are kept (they matter for bridges) and self-loops are dropped.
@@ -255,11 +256,12 @@ elemgraph/
 | Version | Content |
 |---------|---------|
 | v0.1 | CSR + adjacency list, BFS / DFS / connected components, bridges / cut vertices / 2-connectivity with both approaches, tests, Nix flake, CI, first benchmarks (Q1, Q4) on two machines, with hardware counters on Linux |
-| v0.2 | Certificates and checkers (Q6), 32- vs. 64-bit indices (Q2), the `EdgeIds` and `Alloc` template parameters, alignment and bitset experiments (Q3), 2-edge-connected and biconnected components, a SNAP graph |
+| v0.2 | Certifying 2-edge- and 2-vertex-connectivity: certificates from the chain decomposition, linear-time checkers, proofs, and the cost of certification (Q6) on the M2 |
 | v0.3 | Certifying 3-edge-connectivity [Mehlhorn, Neumann, Schmidt 2017], built on the chain decomposition |
-| v0.4 | Vertex reordering (Q5), weighted CSR and Dijkstra heap variants, instruction-count regression benchmarks in CI (Cachegrind) |
-| v0.5 | Scalability: direction-optimizing BFS, parallel BFS and connected components |
-| v0.6 | Directed graphs (strongly connected components, topological sort), minimum spanning trees |
+| v0.4 | 32- vs. 64-bit indices (Q2), the `V`, `E`, `EdgeIds` and `Alloc` template parameters, alignment and bitset experiments (Q3), 2-edge-connected and biconnected components, a SNAP graph |
+| v0.5 | Vertex reordering (Q5), weighted CSR and Dijkstra heap variants, instruction-count regression benchmarks in CI (Cachegrind) |
+| v0.6 | Scalability: direction-optimizing BFS, parallel BFS and connected components |
+| v0.7 | Directed graphs (strongly connected components, topological sort), minimum spanning trees |
 
 ## 10. License
 

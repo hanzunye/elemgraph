@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(elemgraph VERSION 0.1.0 LANGUAGES CXX)
+project(elemgraph VERSION 0.2.0 LANGUAGES CXX)
 
 # The library is header-only: an INTERFACE target that passes the include path
 # and the C++20 requirement on to everything that links against it.
