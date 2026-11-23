@@ -3,18 +3,20 @@
 Elementary graph algorithms in C++20, and experiments on what makes them fast in practice.
 
 elemgraph is a header-only library of graph representations and elementary algorithms: BFS,
-DFS, connected components, bridges and cut vertices. Except for DFS, each algorithm has two
-implementations. All of them are checked against a brute-force reference and benchmarked.
+DFS, connected components, bridges and cut vertices, and certifying tests for 2-edge- and
+2-vertex-connectivity. BFS, connected components, and bridges and cut vertices each have two
+implementations. All algorithms are checked against brute-force references and benchmarked.
 
-Version 0.1 investigates two questions on two machines, an Apple M2 and an Intel x86-64 laptop:
+Version 0.2 investigates three questions. The first two were measured on two machines, an Apple M2
+and an Intel x86-64 laptop:
 
 - **Q4.** How does the chain decomposition of [Schmidt 2013] compare in practice with the classic
   lowpoint algorithm [Hopcroft & Tarjan 1973; Tarjan 1974] for finding bridges and cut vertices?
 - **Q1.** How much faster is BFS with a contiguous CSR layout than with a vector-of-vectors
   adjacency list, and how does the difference depend on the graph class?
 
-The next version adds certifying tests for 2-edge- and 2-vertex-connectivity, with checkers for
-their certificates, and a third question, so far measured on the M2 only:
+The third question is new in version 0.2. It comes with certifying tests for 2-edge- and
+2-vertex-connectivity, and so far it has been measured on the M2 only:
 
 - **Q6.** What does certification cost in practice? How expensive are producing and checking a
   certificate compared with the plain test?
@@ -136,7 +138,7 @@ The tables and the details are in
 - Why does checking an ear decomposition overtake the DFS on large random graphs? One guess is
   that its random accesses do not depend on each other, while those of the DFS do.
 
-## Included in v0.1
+## Included in v0.2
 
 | Part | Implementations | File |
 |------|-----------------|------|
@@ -145,6 +147,7 @@ The tables and the details are in
 | DFS | iterative, explicit stack; preorder, DFS numbers and parents | [`algorithms/dfs.hpp`](include/elemgraph/algorithms/dfs.hpp) |
 | Connected components | BFS vs. union-find | [`algorithms/components.hpp`](include/elemgraph/algorithms/components.hpp) |
 | Bridges, cut vertices | lowpoint vs. chain decomposition (which can also return the chains) | [`algorithms/connectivity.hpp`](include/elemgraph/algorithms/connectivity.hpp) |
+| Certifying 2-edge- and 2-vertex-connectivity | yes: an ear decomposition (open for 2-vertex) taken from the chains; no: a vertex set that at most one edge leaves, or that one vertex separates from the rest; checkers in O(n + m) | [`algorithms/certifying.hpp`](include/elemgraph/algorithms/certifying.hpp) |
 
 The algorithms are templates over the concepts in
 [`concepts.hpp`](include/elemgraph/concepts.hpp), so the same code works with both
@@ -153,12 +156,16 @@ self-loops are discarded. [Schmidt 2013] proves the characterizations behind the
 decomposition for simple connected graphs.
 [`docs/chain-decomposition.md`](docs/chain-decomposition.md) proves the rules that elemgraph uses
 for this more general input.
+[`docs/certifying-connectivity.md`](docs/certifying-connectivity.md) proves that every certificate
+the checkers accept proves its answer, and that the certifying tests always find one.
 
 **Correctness.**
 - Every algorithm is tested against a brute-force reference that applies the definitions
   directly, on thousands of random multigraphs with parallel edges, self-loops and multiple
   components.
 - The two implementations of each problem are also compared with each other.
+- Every certificate is checked. The checkers must also reject certificates that were made wrong
+  on purpose.
 - On Linux, CI builds and tests with GCC, with Clang, and with GCC under AddressSanitizer and
   UndefinedBehaviorSanitizer; on macOS, with Clang. It also runs every benchmark once on small
   graphs.
@@ -166,6 +173,7 @@ for this more general input.
 ## Using it
 
 ```cpp
+#include <elemgraph/algorithms/certifying.hpp>
 #include <elemgraph/algorithms/connectivity.hpp>
 #include <elemgraph/csr_graph.hpp>
 #include <iostream>
@@ -189,6 +197,13 @@ int main() {
     for (const elemgraph::vertex v : result.cut_vertices) {
         std::cout << "cut vertex " << v << '\n';  // cut vertex 2, cut vertex 4
     }
+
+    // A certifying test also returns a certificate for its answer: here, that vertex 4
+    // separates vertex 5 from the rest. The checker verifies it using only the graph.
+    const auto certificate = elemgraph::certify_two_vertex_connectivity(g);
+    const bool valid = elemgraph::check_two_vertex_connectivity(g, certificate);
+    std::cout << "separator " << certificate.separator << ", valid " << valid << '\n';
+    // separator 4, valid 1
 }
 ```
 
@@ -226,8 +241,8 @@ reported.
 
 | Version | Topic |
 |---------|-------|
-| v0.2 | Certifying 2-connectivity: certificates, a linear-time checker and the cost of certification (Q6). Vertex and edge index types as template parameters, and the impact of 32- or 64-bit indices (Q2). Memory layout (Q3). The open questions above: TLB counters, a Clang build on Linux, profiling the chain decomposition, and a faster DFS. |
 | v0.3 | Certifying 3-edge-connectivity [Mehlhorn, Neumann, Schmidt 2017], building on the chain decomposition |
+| v0.4 | Vertex and edge index types as template parameters, and the impact of 32- or 64-bit indices (Q2). Memory layout (Q3). The open questions above: TLB counters, a Clang build on Linux, profiling the chain decomposition, a faster DFS, and the two parts of the cost of certification. |
 | later | Vertex reordering (Q5), weighted graphs and Dijkstra, parallel BFS and connected components |
 
 The design, the research questions and the benchmark method are described in

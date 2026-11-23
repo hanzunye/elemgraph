@@ -30,7 +30,7 @@
       mkTests = pkgs: { name, stdenv, sanitize ? false }:
         stdenv.mkDerivation {
           pname = "elemgraph-tests-${name}";
-          version = "0.1.0";
+          version = "0.2.0";
           src = ./.;
 
           nativeBuildInputs = [ pkgs.cmake pkgs.ninja ];

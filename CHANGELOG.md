@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 (2026-11-23)
+
+This release adds certifying tests for 2-edge- and 2-vertex-connectivity. Each answer comes with a
+certificate, which a linear-time checker verifies using only the graph. A new note proves that the
+certificates are sound and always found. The release also has the first measurements of what
+certification costs (Q6 in [`docs/DESIGN.md`](docs/DESIGN.md)), on the Apple M2.
 
 ### Library
 
@@ -13,17 +18,6 @@
   - Of the two sides of a "no" certificate, the smaller one is returned, since it is faster to
     check: for a disconnected graph, a smallest component.
 
-### Benchmarks
-
-- Q6, the cost of certification (`bench/certifying.cpp`). Each run times the DFS, the test
-  without a certificate, the two certifying tests and the two checkers, all from the same search.
-  The inputs are two classes whose answers are yes (grids, and a new class `gnm_cycle`: G(n,m)
-  plus a Hamiltonian cycle) and one whose answers are no (G(n,m)).
-- First Q6 results, on the Apple M2:
-  [`bench/results/m2/2026-11-22.md`](bench/results/m2/2026-11-22.md). Certifying costs
-  1.22–1.55× the plain test, DFS included. Checking a "yes" certificate takes 0.29–0.75× the time
-  of the plain test. `bench/plot.py` draws the Q6 figure and prints its tables.
-
 ### Correctness
 
 - [`docs/certifying-connectivity.md`](docs/certifying-connectivity.md) proves two things: every
@@ -32,6 +26,39 @@
 - The answers are compared with brute-force references, and every certificate is checked, on
   random multigraphs and on random graphs built from ears. The checkers must also reject
   certificates that were made wrong on purpose.
+
+### Benchmarks
+
+- Q6, the cost of certification (`bench/certifying.cpp`). Each run times the DFS, the test
+  without a certificate, the two certifying tests and the two checkers, all from the same search.
+  The inputs are two classes whose answers are yes (grids, and a new class `gnm_cycle`: G(n,m)
+  plus a Hamiltonian cycle) and one whose answers are no (G(n,m)).
+- `bench/plot.py` draws the Q6 figure and prints its tables. Each figure uses only the results
+  files that measured its question.
+
+### Results
+
+On the Apple M2 (Clang 21), with 2^14 to 2^22 vertices:
+
+- **Q6.** Producing a certificate costs 1.22–1.55× the plain test, DFS included, and 1.49–2.16×
+  after the search alone.
+  - Checking a "yes" certificate takes 0.29–0.75× the time of the plain test with DFS. On G(n,m)
+    plus a Hamiltonian cycle with 2^19 vertices or more, it is faster than the DFS alone.
+  - Certifying 2-vertex-connectivity costs 0–8 % more than 2-edge-connectivity after the search.
+  - A quick experiment outside the benchmark suite splits the extra cost about evenly. One half
+    is storing the chains; the other is scanning for the ids of tree edges.
+
+Details: [`bench/results/m2/2026-11-22.md`](bench/results/m2/2026-11-22.md).
+
+### Known limitations
+
+- Q6 has been measured once, on the M2 only.
+- In the Q6 inputs, every "no" certificate is a single vertex. Checking large "no" certificates
+  has not been measured.
+- The split of the extra cost comes from a quick experiment, not from the benchmark suite.
+- Vertex ids, edge ids and offsets are still fixed to 32 bits. The template parameters (Q2) and
+  the memory layout experiments (Q3) have moved to v0.4, after certifying 3-edge-connectivity in
+  v0.3.
 
 ## v0.1.0 (2026-11-12)
 
