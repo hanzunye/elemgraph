@@ -13,6 +13,12 @@ Version 0.1 investigates two questions on two machines, an Apple M2 and an Intel
 - **Q1.** How much faster is BFS with a contiguous CSR layout than with a vector-of-vectors
   adjacency list, and how does the difference depend on the graph class?
 
+The next version adds certifying tests for 2-edge- and 2-vertex-connectivity, with checkers for
+their certificates, and a third question, so far measured on the M2 only:
+
+- **Q6.** What does certification cost in practice? How expensive are producing and checking a
+  certificate compared with the plain test?
+
 elemgraph is developed by Yunze Han with Claude (Anthropic) as an AI coding assistant. Claude
 generated much of the code, tests and documentation. Yunze Han reviewed and merged all changes.
 
@@ -84,6 +90,37 @@ The full tables, the hardware counters, the variation across repetitions and run
 observations are in [`bench/results/m2/2026-11-11.md`](bench/results/m2/2026-11-11.md) and
 [`bench/results/x86-laptop/2026-11-11.md`](bench/results/x86-laptop/2026-11-11.md).
 
+### Q6: the cost of certification
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="bench/results/q6-dark.svg">
+  <img alt="Two line charts over the graph size from 2^14 to 2^22 vertices, Apple M2, for grid, G(n,m) plus a Hamiltonian cycle, and G(n,m). Left: the certifying test for 2-vertex-connectivity including the DFS, divided by the plain test including the DFS; the ratio stays at 1.28–1.32 on grids and lies between 1.24 and 1.55 on the two random classes, highest at 2^19 vertices. Right: checking the certificate, divided by the plain test including the DFS, for the two classes whose answer is yes; the ratio lies between 0.69 and 0.75 on grids and falls from 0.62 to 0.29 on G(n,m) plus a cycle." src="bench/results/q6.svg">
+</picture>
+
+These results are from the M2 only. A certifying test answers yes with an ear decomposition taken
+from the chains, and no with a small vertex set
+([`docs/certifying-connectivity.md`](docs/certifying-connectivity.md)). The plain test is the
+chain decomposition without keeping the chains. Grids and G(n,m) plus a Hamiltonian cycle are
+2-vertex-connected; G(n,m) is not. The figure shows 2-vertex-connectivity.
+
+- **Producing a certificate costs 1.22–1.55× the plain test, DFS included.** On grids the ratio
+  stays at 1.22–1.32 at every size. On the random graphs it peaks at about 1.5 with 2^19 vertices.
+  Certifying 2-vertex-connectivity costs 0–8 % more than 2-edge-connectivity after the search.
+- **Checking a "yes" certificate is faster than the plain test.** The checker uses only the graph
+  and the certificate, with no DFS. It takes 0.69–0.75× the time of the plain test with DFS on
+  grids, and 0.29–0.63× on G(n,m) plus a cycle. There, from 2^19 vertices on, it is faster than
+  the DFS alone.
+- **The extra cost of certifying has two parts of about equal size, measured once outside the
+  benchmark suite.** The chains are stored: 369 MB for G(n,m) plus a cycle with 2^22 vertices,
+  more than the CSR graph. Also, the id of each tree edge on a chain is found by scanning a list.
+  Both parts can be made cheaper.
+- **The "no" certificates of this run are trivial.** From 2^14 vertices on, the G(n,m) graphs
+  have isolated vertices. The certificate is then a single vertex, checked in under 50 µs.
+  Checking a large "no" certificate has not been measured yet.
+
+The tables and the details are in
+[`bench/results/m2/2026-11-22.md`](bench/results/m2/2026-11-22.md).
+
 ### Open questions
 
 - Why does the Q1 speedup peak at 2^19–2^20 vertices on the M2 but at 2^18 on the x86 laptop? No
@@ -96,6 +133,8 @@ observations are in [`bench/results/m2/2026-11-11.md`](bench/results/m2/2026-11-
 - DFS executes 3–3.5× as many instructions per vertex as BFS. On G(n,m) and R-MAT graphs, it
   takes 1.8–3.5× as long.
 - On the M2, BFS on the grid with 2^19 vertices is faster on the adjacency list than on CSR.
+- Why does checking an ear decomposition overtake the DFS on large random graphs? One guess is
+  that its random accesses do not depend on each other, while those of the DFS do.
 
 ## Included in v0.1
 
